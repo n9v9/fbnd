@@ -33,9 +33,9 @@ const (
 
 // Semester is used to describe the accompanying DegreeProgram.
 type Semester struct {
-	Cycle SemesterCycle
-	Year  int
-	Term  int
+	Cycle SemesterCycle `json:"cycle"`
+	Year  int           `json:"year"`
+	Term  int           `json:"term"`
 }
 
 // ID is the internal ID of each DegreeProgram returned by DegreePrograms.
@@ -44,10 +44,10 @@ type ID string
 
 // DegreeProgram represents a degree program for which a timetable is available.
 type DegreeProgram struct {
-	ID       ID
-	Name     string
-	Degree   Degree
-	Semester Semester
+	ID       ID       `json:"id"`
+	Name     string   `json:"name"`
+	Degree   Degree   `json:"degree"`
+	Semester Semester `json:"semester"`
 }
 
 // Lesson is used to describe the type of the accompanying Course.
@@ -86,26 +86,26 @@ const (
 
 // Time represents the day, start and end of a Course.
 type Time struct {
-	Weekday   time.Weekday
-	HourStart time.Duration
-	HourEnd   time.Duration
+	Weekday   time.Weekday `json:"weekday"`
+	HourStart int          `json:"hourStart"`
+	HourEnd   int          `json:"hourEnd"`
 }
 
 // Course represents a single course of a timetable for a DegreeProgram.
 type Course struct {
-	NameLong       string
-	NameShort      string
-	ProfessorLong  string
-	ProfessorShort string
-	Room           string
-	Lesson         Lesson
-	Time           Time
+	NameLong       string `json:"nameLong"`
+	NameShort      string `json:"nameShort"`
+	ProfessorLong  string `json:"professorLong"`
+	ProfessorShort string `json:"professorShort"`
+	Room           string `json:"room"`
+	Lesson         Lesson `json:"lesson"`
+	Time           Time   `json:"time"`
 }
 
 // TimetableDay contains all courses for a Weekday for an accompanying Timetable.
 type TimetableDay struct {
-	Weekday time.Weekday
-	Courses []Course
+	Weekday time.Weekday `json:"weekday"`
+	Courses []Course     `json:"courses"`
 }
 
 // Timetable contains all days for which courses exist as well as a DegreeProgram
@@ -114,8 +114,8 @@ type Timetable struct {
 	// Can be nil, use FillDegreeProgram to fill the value, or if you obtained
 	// the right DegreeProgram through calling DegreePrograms prior to calling
 	// TimetableForDegreeProgram you can set the instance yourself.
-	DegreeProgram *DegreeProgram
-	Days          []TimetableDay
+	DegreeProgram *DegreeProgram `json:"degreeProgram"`
+	Days          []TimetableDay `json:"days"`
 	id            ID
 	oldCycle      SemesterCycle
 }
@@ -346,8 +346,8 @@ func parseHours(doc *goquery.Document) (map[int]Time, error) {
 
 		// We need i+1 instead of i because we skipped the first `th` element with `:not(:first-child)`.
 		hours[i+1] = Time{
-			HourStart: time.Hour * time.Duration(start),
-			HourEnd:   time.Hour * time.Duration(end),
+			HourStart: start,
+			HourEnd:   end,
 		}
 
 		return true

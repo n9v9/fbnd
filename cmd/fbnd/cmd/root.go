@@ -8,6 +8,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Global flags that are set for all commands.
+var (
+	outputJSON = false
+)
+
 var rootCmd = &cobra.Command{
 	Use:   "fbnd",
 	Short: "Timetables of FB03 inside your terminal",
@@ -29,5 +34,6 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.PersistentFlags().BoolVar(&outputJSON, "json", false, "Enable printing results in JSON format")
 	rootCmd.PersistentFlags().Bool("no-color", false, "Disable colorized output")
 }

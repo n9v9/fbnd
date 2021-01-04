@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -89,12 +90,14 @@ func runList() error {
 		}
 	}
 
-	printTable(programs)
-
-	return nil
+	return printTable(programs)
 }
 
-func printTable(programs []fbnd.DegreeProgram) {
+func printTable(programs []fbnd.DegreeProgram) error {
+	if outputJSON {
+		return json.NewEncoder(os.Stdout).Encode(programs)
+	}
+
 	formatCycle := func(s fbnd.Semester) string { return fmt.Sprintf("%s %d", s.Cycle, s.Year) }
 	formatSemester := func(s fbnd.Semester) string { return fmt.Sprintf("Semester %d", s.Term) }
 
@@ -112,4 +115,6 @@ func printTable(programs []fbnd.DegreeProgram) {
 			v.Name,
 		)
 	}
+
+	return nil
 }

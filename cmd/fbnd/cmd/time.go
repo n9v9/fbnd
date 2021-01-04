@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -36,6 +37,16 @@ func runTime(id string) error {
 		return fmt.Errorf("could find no courses for degree program with id %s", id)
 	}
 
+	if outputJSON {
+		// When we output JSON we want to get the accompanying DegreeProgram.
+		if timetable.DegreeProgram == nil {
+			if err := timetable.FillDegreeProgram(); err != nil {
+				return err
+			}
+		}
+		return json.NewEncoder(os.Stdout).Encode(timetable)
+	}
+
 	printlnWeekday := color.New(color.FgWhite, color.Underline, color.Bold).PrintlnFunc()
 	printlnWeekdayToday := color.New(color.FgGreen, color.Underline, color.Bold).PrintlnFunc()
 
@@ -52,7 +63,7 @@ func runTime(id string) error {
 
 		for _, v := range day.Courses {
 			fmt.Printf("%02d - %02d | %-*s | %-*s | %0-*s | %s\n",
-				int(v.Time.HourStart.Hours()), int(v.Time.HourEnd.Hours()),
+				v.Time.HourStart, v.Time.HourEnd,
 				maxNameShort, v.NameShort,
 				maxLesson, v.Lesson,
 				maxProfessorShort, v.ProfessorShort,
