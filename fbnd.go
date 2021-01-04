@@ -233,6 +233,10 @@ func TimetableForDegreeProgram(id ID) (*Timetable, error) {
 			professorShort := fields[2]
 			room := fields[3]
 
+			if room == "???" {
+				room = "Unknown"
+			}
+
 			span, err := strconv.Atoi(s.AttrOr("colspan", "1"))
 			if err != nil {
 				errEach = err
