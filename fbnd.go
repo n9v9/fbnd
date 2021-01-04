@@ -230,7 +230,7 @@ func parseDegreeProgramNames(doc *goquery.Document, cycle SemesterCycle, year in
 	// </select>
 	degreeSelector := `#select_S > optgroup[label="Bachelor"] option, #select_S > optgroup[label="Master"] option`
 
-	r := regexp.MustCompile(`(Bachelor|Master) (.*?) \((\d+)`)
+	r := regexp.MustCompile(`(Bachelor|Master) +(.*?) +\((\d+)`)
 
 	var (
 		programs []DegreeProgram
