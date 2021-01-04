@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"time"
 
+	"github.com/fatih/color"
 	"github.com/n9v9/fbnd"
 	"github.com/n9v9/fbnd/cmd/fbnd/cmd/internal"
 	"github.com/spf13/cobra"
@@ -34,8 +36,15 @@ func runTime(id string) error {
 		return fmt.Errorf("could find no courses for degree program with id %s", id)
 	}
 
+	printlnWeekday := color.New(color.FgWhite, color.Underline, color.Bold).PrintlnFunc()
+	printlnWeekdayToday := color.New(color.FgGreen, color.Underline, color.Bold).PrintlnFunc()
+
 	for _, day := range timetable.Days {
-		fmt.Println(day.Weekday)
+		if day.Weekday == time.Now().Weekday() {
+			printlnWeekdayToday(day.Weekday)
+		} else {
+			printlnWeekday(day.Weekday)
+		}
 
 		maxNameShort := internal.Max(day.Courses, func(i int) int { return len(day.Courses[i].NameShort) })
 		maxLesson := internal.Max(day.Courses, func(i int) int { return len(day.Courses[i].Lesson.String()) })
