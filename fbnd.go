@@ -81,7 +81,56 @@ type Course struct {
 	Time           Time
 }
 
-type Timetable map[time.Weekday][]Course
+// TimetableDay contains all courses for a Weekday for an accompanying Timetable.
+type TimetableDay struct {
+	Weekday time.Weekday
+	Courses []Course
+}
+
+// Timetable contains all days for which courses exist as well as a DegreeProgram
+// for which the timetable is valid.
+type Timetable struct {
+	// Can be nil, use FillDegreeProgram to fill the value, or if you obtained
+	// the right DegreeProgram through calling DegreePrograms prior to calling
+	// TimetableForDegreeProgram you can set the instance yourself.
+	DegreeProgram *DegreeProgram
+	Days          []TimetableDay
+	id            ID
+	oldCycle      SemesterCycle
+}
+
+// FillDegreeProgram calls DegreePrograms at most one time to obtain the correct
+// DegreeProgram.
+// The reason that t.DegreeProgram can be nil is as follows:
+// If the function TimetableForDegreeProgram is called there is no way to know
+// which semester the passed in ID belongs to; the server defaults to Winter.
+// Now if the ID belongs to Winter then the DegreeProgram can be found and parsed within
+// one request but if it belongs to Summer then the response we get does not contain
+// the DegreeProgram, only the timetable for it and another request has to be made.
+func (t *Timetable) FillDegreeProgram() error {
+	if t.DegreeProgram != nil {
+		return nil
+	}
+
+	newCycle := Summer
+	if t.oldCycle == Summer {
+		newCycle = Winter
+	}
+	programs, err := DegreePrograms(newCycle)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range programs {
+		if v.ID == t.id {
+			t.DegreeProgram = &v
+			return nil
+		}
+	}
+
+	// This should never happen unless the structure of the website changes.
+	panic("could not find DegreeProgram after parsing sites for both summer and winter")
+}
 
 // DegreePrograms returns all degree programs for which timetables are available
 // and that fall into the given cycle.
@@ -92,17 +141,25 @@ func DegreePrograms(cycle SemesterCycle) ([]DegreeProgram, error) {
 		return nil, err
 	}
 
-	year, err := parseSemesterYear(doc, cycle)
+	year, parsedCycle, err := parseSemesterYear(doc)
 	if err != nil {
 		return nil, err
+	}
+	if parsedCycle != cycle {
+		// This should never happen unless the structure of the website changes.
+		panic(fmt.Sprintf("expected parsed semester cycle %s but got %s", cycle, parsedCycle))
 	}
 
 	return parseDegreeProgramNames(doc, cycle, year)
 }
 
-// TimetableForDegreeProgram returns all courses for the given ID of a specific degree program.
+// TimetableForDegreeProgram returns a Timetable that contains all courses for the given degree program.
+// The days inside Timetable are sorted by their weekday and the courses inside each day are sorted
+// by their start hour.
 // The ID can be obtained by calling DegreePrograms.
-func TimetableForDegreeProgram(id ID) (Timetable, error) {
+func TimetableForDegreeProgram(id ID) (*Timetable, error) {
+	id = ID(strings.ToUpper(string(id)))
+
 	doc, err := timeTableDoc(id)
 	if err != nil {
 		return nil, err
@@ -191,23 +248,53 @@ func TimetableForDegreeProgram(id ID) (Timetable, error) {
 		time.Friday:    4,
 		time.Saturday:  5,
 	}
-	sort.SliceStable(courses, func(i, j int) bool {
-		if weekdaysOrder[courses[i].Time.Weekday] < weekdaysOrder[courses[j].Time.Weekday] {
-			return true
-		}
-		if weekdaysOrder[courses[i].Time.Weekday] > weekdaysOrder[courses[j].Time.Weekday] {
-			return false
-		}
-		return courses[i].Time.HourStart < courses[j].Time.HourStart
-	})
 
 	// Map each course to its weekday.
-	timetable := make(Timetable)
+	timetable := make(map[time.Weekday][]Course)
 	for _, v := range courses {
 		timetable[v.Time.Weekday] = append(timetable[v.Time.Weekday], v)
 	}
 
-	return timetable, errEach
+	days := make([]TimetableDay, 0, len(timetable))
+	for weekday, courses := range timetable {
+		// Sort the courses within each day by their start hour.
+		sort.SliceStable(courses, func(i, j int) bool {
+			return courses[i].Time.HourStart < courses[j].Time.HourStart
+		})
+		days = append(days, TimetableDay{
+			Weekday: weekday,
+			Courses: courses,
+		})
+	}
+
+	// Sort the days by their weekday.
+	sort.SliceStable(days, func(i, j int) bool {
+		return weekdaysOrder[days[i].Weekday] < weekdaysOrder[days[j].Weekday]
+	})
+
+	year, cycle, err := parseSemesterYear(doc)
+	if err != nil {
+		return nil, err
+	}
+
+	// Try to find the DegreeProgram as it might not be possible, see FillDegreeProgram for more.
+	var selected *DegreeProgram
+	names, err := parseDegreeProgramNames(doc, cycle, year)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range names {
+		if v.ID == id {
+			selected = &v
+		}
+	}
+
+	return &Timetable{
+		DegreeProgram: selected,
+		Days:          days,
+		id:            id,
+		oldCycle:      cycle,
+	}, errEach
 }
 
 // parseHours returns a map that maps the index of each `th` element to its containing Time.
@@ -289,7 +376,7 @@ func parseDegreeProgramNames(doc *goquery.Document, cycle SemesterCycle, year in
 		}
 
 		programs = append(programs, DegreeProgram{
-			ID:     ID(id),
+			ID:     ID(strings.ToUpper(id)),
 			Name:   groups[2],
 			Degree: degree,
 			Semester: Semester{
@@ -305,16 +392,33 @@ func parseDegreeProgramNames(doc *goquery.Document, cycle SemesterCycle, year in
 	return programs, errEach
 }
 
-func parseSemesterYear(doc *goquery.Document, cycle SemesterCycle) (int, error) {
+// parseSemesterYear looks for the radio box in doc that describes the semester,
+// either winter or summer and that is checked.
+// It returns the year of the semester, the SemesterCycle as well as any error that occurred.
+func parseSemesterYear(doc *goquery.Document) (year int, cycle SemesterCycle, err error) {
 	var yearText string
-	if cycle == Winter {
+
+	if _, ok := doc.Find(`input[id="inlineWintersemester"]`).Attr("checked"); ok {
 		yearText = doc.Find(`label[for="inlineWintersemester"]`).Text()
-	} else {
+	} else if _, ok := doc.Find(`input[id="inlineSommersemester"]`).Attr("checked"); ok {
 		yearText = doc.Find(`label[for="inlineSommersemester"]`).Text()
+	} else {
+		// We should never get here unless the structure of the website changes.
+		panic("could not parse semester year")
 	}
 
-	r := regexp.MustCompile(`^(?:Winter|Sommer)semester (\d{4})`)
-	return strconv.Atoi(r.FindStringSubmatch(yearText)[1])
+	r := regexp.MustCompile(`^(Winter|Sommer)semester (\d{4})`)
+	groups := r.FindStringSubmatch(yearText)
+
+	switch groups[1] {
+	case "Winter":
+		cycle = Winter
+	case "Sommer":
+		cycle = Summer
+	}
+
+	year, err = strconv.Atoi(groups[2])
+	return
 }
 
 // degreeProgramsDoc fetches the HTML for the cycle and returns the parsed document.
@@ -341,7 +445,7 @@ func degreeProgramsDoc(cycle SemesterCycle) (*goquery.Document, error) {
 	return goquery.NewDocumentFromReader(resp.Body)
 }
 
-// timeTableDoc fetches the HTML for the Iid and returns the parsed document.
+// timeTableDoc fetches the HTML for the id and returns the parsed document.
 // If the request failed or the response could not be parsed, an error is returned.
 func timeTableDoc(id ID) (*goquery.Document, error) {
 	resp, err := http.PostForm(timetableURL, url.Values{
