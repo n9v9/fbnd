@@ -53,9 +53,30 @@ type DegreeProgram struct {
 // Lesson is used to describe the type of the accompanying Course.
 type Lesson string
 
+func (l Lesson) String() string {
+	switch l {
+	case Lecture:
+		return "Lecture"
+	case Exercise:
+		return "Exercise"
+	case Internship:
+		return "Internship"
+	case Seminar:
+		return "Seminar"
+	case SeminarLecture:
+		return "Seminar Lecture"
+	case LanguageLecture:
+		return "Language Lecture"
+	case Tutorial:
+		return "Tutorial"
+	default:
+		panic(fmt.Sprintf("invalid value %s for type Lesson", string(l)))
+	}
+}
+
 const (
-	Lecture         Lesson = "L"
-	Exercise        Lesson = "E"
+	Lecture         Lesson = "V"
+	Exercise        Lesson = "U"
 	Internship      Lesson = "P"
 	Seminar         Lesson = "S"
 	SeminarLecture  Lesson = "SL"
