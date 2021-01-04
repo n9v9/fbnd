@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -80,6 +81,8 @@ type Course struct {
 	Time           Time
 }
 
+type Timetable map[time.Weekday][]Course
+
 // DegreePrograms returns all degree programs for which timetables are available
 // and that fall into the given cycle.
 // If the HTML could not be parsed, an error is returned.
@@ -97,9 +100,9 @@ func DegreePrograms(cycle SemesterCycle) ([]DegreeProgram, error) {
 	return parseDegreeProgramNames(doc, cycle, year)
 }
 
-// Timetable returns all courses for the given ID of a specific degree program.
+// TimetableForDegreeProgram returns all courses for the given ID of a specific degree program.
 // The ID can be obtained by calling DegreePrograms.
-func Timetable(id ID) ([]Course, error) {
+func TimetableForDegreeProgram(id ID) (Timetable, error) {
 	doc, err := timeTableDoc(id)
 	if err != nil {
 		return nil, err
@@ -179,7 +182,32 @@ func Timetable(id ID) ([]Course, error) {
 		return errEach == nil
 	})
 
-	return courses, errEach
+	// Sort the courses by weekdays and then by their start hour.
+	weekdaysOrder := map[time.Weekday]int{
+		time.Monday:    0,
+		time.Tuesday:   1,
+		time.Wednesday: 2,
+		time.Thursday:  3,
+		time.Friday:    4,
+		time.Saturday:  5,
+	}
+	sort.SliceStable(courses, func(i, j int) bool {
+		if weekdaysOrder[courses[i].Time.Weekday] < weekdaysOrder[courses[j].Time.Weekday] {
+			return true
+		}
+		if weekdaysOrder[courses[i].Time.Weekday] > weekdaysOrder[courses[j].Time.Weekday] {
+			return false
+		}
+		return courses[i].Time.HourStart < courses[j].Time.HourStart
+	})
+
+	// Map each course to its weekday.
+	timetable := make(Timetable)
+	for _, v := range courses {
+		timetable[v.Time.Weekday] = append(timetable[v.Time.Weekday], v)
+	}
+
+	return timetable, errEach
 }
 
 // parseHours returns a map that maps the index of each `th` element to its containing Time.
