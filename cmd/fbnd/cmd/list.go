@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/fatih/color"
 	"github.com/n9v9/fbnd"
 	"github.com/n9v9/fbnd/cmd/fbnd/cmd/internal"
 	"github.com/spf13/cobra"
@@ -100,11 +102,23 @@ func printTable(programs []fbnd.DegreeProgram) error {
 
 	formatCycle := func(s fbnd.Semester) string { return fmt.Sprintf("%s %d", s.Cycle, s.Year) }
 	formatSemester := func(s fbnd.Semester) string { return fmt.Sprintf("Semester %d", s.Term) }
+	formatHeader := func(cell string) string { return color.New(color.FgWhite, color.Bold).Sprint(cell) }
 
 	maxID := internal.Max(programs, func(i int) int { return len(programs[i].ID) })
 	maxCycle := internal.Max(programs, func(i int) int { return len(formatCycle(programs[i].Semester)) })
 	maxSemester := internal.Max(programs, func(i int) int { return len(formatSemester(programs[i].Semester)) })
 	maxDegree := internal.Max(programs, func(i int) int { return len(programs[i].Degree) })
+
+	// Print the header.
+	// This has to be so cumbersome because specifying a width for ANSI colored strings somehow has no effect.
+	// So we can not format it like we do for all other lines.
+	fmt.Printf("%s%s | %s%s | %s%s | %s%s | %s\n",
+		formatHeader("ID"), strings.Repeat(" ", maxID-len("ID")),
+		formatHeader("Cycle"), strings.Repeat(" ", maxCycle-len("Cycle")),
+		formatHeader("Semester"), strings.Repeat(" ", maxSemester-len("Semester")),
+		formatHeader("Degree"), strings.Repeat(" ", maxDegree-len("Degree")),
+		formatHeader("Name"),
+	)
 
 	for _, v := range programs {
 		fmt.Printf("%-*s | %-*s | %-*s | %-*s | %s\n",
