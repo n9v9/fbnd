@@ -48,11 +48,50 @@ func runTime(id string) error {
 	}
 
 	printlnWeekday := color.New(color.FgWhite, color.Underline, color.Bold).PrintlnFunc()
-	printlnWeekdayToday := color.New(color.FgGreen, color.Underline, color.Bold).PrintlnFunc()
+	printlnWeekdayToday := color.New(color.FgYellow, color.Underline, color.Bold).PrintlnFunc()
+	printlnCourse := color.New(color.FgBlue, color.Bold).PrintlnFunc()
+	printlnNextCourse := color.New(color.FgBlue).PrintlnFunc()
+
+	currentHour := time.Now().Hour()
+
+	nextCourseIndexes := func(courses []fbnd.Course) map[int]struct{} {
+		// Map all start hours to the corresponding index into courses.
+		startHours := make(map[int][]int)
+		for i, v := range courses {
+			startHours[v.Time.HourStart] = append(startHours[v.Time.HourStart], i)
+		}
+
+		// Now we save the nearest next courses.
+		var (
+			currentMin  []int
+			nextMinHour *int
+		)
+		for k, v := range startHours {
+			// This is important because the outer k does not change, only the outer k's value.
+			k := k
+			if k > currentHour && (nextMinHour == nil || k < *nextMinHour) {
+				nextMinHour = &k
+				currentMin = v
+			}
+		}
+
+		// Build the result of next courses where the key is the index into courses.
+		res := make(map[int]struct{})
+		for _, courseIndex := range currentMin {
+			res[courseIndex] = struct{}{}
+		}
+		return res
+	}
 
 	for _, day := range timetable.Days {
-		if day.Weekday == time.Now().Weekday() {
+		var (
+			isToday = day.Weekday == time.Now().Weekday()
+			next    map[int]struct{}
+		)
+
+		if isToday {
 			printlnWeekdayToday(day.Weekday)
+			next = nextCourseIndexes(day.Courses)
 		} else {
 			printlnWeekday(day.Weekday)
 		}
@@ -61,13 +100,29 @@ func runTime(id string) error {
 		maxLesson := internal.Max(day.Courses, func(i int) int { return len(day.Courses[i].Lesson.String()) })
 		maxProfessorShort := internal.Max(day.Courses, func(i int) int { return len(day.Courses[i].ProfessorShort) })
 
-		for _, v := range day.Courses {
-			fmt.Printf("%02d - %02d | %-*s | %-*s | %0-*s | %s\n",
+		for i, v := range day.Courses {
+			line := fmt.Sprintf("%02d - %02d | %-*s | %-*s | %0-*s | %s",
 				v.Time.HourStart, v.Time.HourEnd,
 				maxNameShort, v.NameShort,
 				maxLesson, v.Lesson,
 				maxProfessorShort, v.ProfessorShort,
 				v.Room)
+
+			if isToday && currentHour >= v.Time.HourStart && currentHour < v.Time.HourEnd {
+				// Highlight the current course.
+				printlnCourse(line)
+				continue
+			} else if isToday {
+				if _, ok := next[i]; ok {
+					// Highlight the next course.
+					printlnNextCourse(line)
+					continue
+				}
+			}
+
+			// This course is either not today or not one of the directly next ones,
+			// so we do not highlight it.
+			fmt.Println(line)
 		}
 	}
 
