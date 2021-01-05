@@ -15,7 +15,11 @@ import (
 var timeCmd = &cobra.Command{
 	Use:   "time",
 	Short: "Display the timetable for a specific degree program",
-	Args:  cobra.ExactArgs(1),
+	Long: `Display the timetable for a specific degree program
+
+This command expects the ID of the degree program for which to display the timetable.
+If you do not know the ID, you can see all available ones by calling the list command.`,
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runTime(args[0]); err != nil {
 			fmt.Fprintln(os.Stderr, err)
