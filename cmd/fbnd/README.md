@@ -8,8 +8,8 @@ Hochschule Niederrhein.
 
 ## How it works
 
-The program uses the [fbnd library](https://github.com/n9v9/fbnd) to fetch and parse the 
-available timetables, followed by prettifying and displaying the data.
+The program uses the [fbnd library](https://github.com/n9v9/fbnd) to fetch and
+parse the available timetables, followed by prettifying and displaying the data.
 
 To list all available degree programs, two `POST` requests are made; one for the
 winter and one for the summer semester. To list the timetable for a given degree
@@ -30,7 +30,7 @@ to the page and choosing the correct timetable; and faster as well.
 
 ## Build from source
 
-With Go 1.15 run the following command:
+With Go 1.15 or above, run the following command:
 
 ```
 go get github.com/n9v9/fbnd/cmd/fbnd
