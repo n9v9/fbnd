@@ -69,8 +69,10 @@ func (l Lesson) String() string {
 		return "Language Lecture"
 	case Tutorial:
 		return "Tutorial"
+	case BlockCourse:
+		return "Block Course"
 	default:
-		panic(fmt.Sprintf("invalid value %s for type Lesson", string(l)))
+		return fmt.Sprintf("Unknown (%s)", string(l))
 	}
 }
 
@@ -82,6 +84,7 @@ const (
 	SeminarLecture  Lesson = "SL"
 	LanguageLecture Lesson = "F"
 	Tutorial        Lesson = "T"
+	BlockCourse     Lesson = "BL"
 )
 
 // Time represents the day, start and end of a Course.
