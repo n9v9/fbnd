@@ -112,7 +112,7 @@ func printTable(programs []fbnd.DegreeProgram) error {
 	// Print the header.
 	// This has to be so cumbersome because specifying a width for ANSI colored strings somehow has no effect.
 	// So we can not format it like we do for all other lines.
-	fmt.Printf("%s%s | %s%s | %s%s | %s%s | %s\n",
+	fmt.Fprintf(color.Output, "%s%s | %s%s | %s%s | %s%s | %s\n",
 		formatHeader("ID"), strings.Repeat(" ", maxID-len("ID")),
 		formatHeader("Cycle"), strings.Repeat(" ", maxCycle-len("Cycle")),
 		formatHeader("Semester"), strings.Repeat(" ", maxSemester-len("Semester")),
