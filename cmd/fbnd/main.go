@@ -1,7 +1,13 @@
 package main
 
-import "github.com/n9v9/fbnd/cmd/fbnd/cmd"
+import (
+	"fmt"
+	"os"
+)
 
 func main() {
-	cmd.Execute()
+	if err := cmdRoot().Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }

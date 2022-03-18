@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"encoding/json"
@@ -9,33 +9,33 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/n9v9/fbnd"
-	"github.com/n9v9/fbnd/cmd/fbnd/cmd/internal"
 	"github.com/spf13/cobra"
 )
 
 var summer, winter bool
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all degree programs for which timetables are available",
-	Args: func(cmd *cobra.Command, args []string) error {
-		if summer && winter {
-			return errors.New("the flags summer and winter are mutually exclusive")
-		}
-		return cobra.NoArgs(cmd, args)
-	},
-	Run: func(cmd *cobra.Command, _ []string) {
-		if err := runList(); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-	},
-}
+func cmdList() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all degree programs for which timetables are available",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if summer && winter {
+				return errors.New("the flags summer and winter are mutually exclusive")
+			}
+			return cobra.NoArgs(cmd, args)
+		},
+		Run: func(_ *cobra.Command, _ []string) {
+			if err := runList(); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+		},
+	}
 
-func init() {
-	rootCmd.AddCommand(listCmd)
-	listCmd.Flags().BoolVarP(&summer, "summer", "s", false, "List degree programs for summer semesters only")
-	listCmd.Flags().BoolVarP(&winter, "winter", "w", false, "List degree programs for winter semesters only")
+	cmd.Flags().BoolVarP(&summer, "summer", "s", false, "List degree programs for summer semesters only")
+	cmd.Flags().BoolVarP(&winter, "winter", "w", false, "List degree programs for winter semesters only")
+
+	return cmd
 }
 
 func runList() error {
@@ -102,10 +102,10 @@ func printTable(programs []fbnd.DegreeProgram) error {
 	formatSemester := func(s fbnd.Semester) string { return fmt.Sprintf("Semester %d", s.Term) }
 	formatHeader := func(cell string) string { return color.New(color.FgWhite, color.Bold).Sprint(cell) }
 
-	maxID := internal.Max(programs, func(v *fbnd.DegreeProgram) int { return len(v.ID) })
-	maxCycle := internal.Max(programs, func(v *fbnd.DegreeProgram) int { return len(formatCycle(v.Semester)) })
-	maxSemester := internal.Max(programs, func(v *fbnd.DegreeProgram) int { return len(formatSemester(v.Semester)) })
-	maxDegree := internal.Max(programs, func(v *fbnd.DegreeProgram) int { return len(v.Degree) })
+	maxID := Max(programs, func(v *fbnd.DegreeProgram) int { return len(v.ID) })
+	maxCycle := Max(programs, func(v *fbnd.DegreeProgram) int { return len(formatCycle(v.Semester)) })
+	maxSemester := Max(programs, func(v *fbnd.DegreeProgram) int { return len(formatSemester(v.Semester)) })
+	maxDegree := Max(programs, func(v *fbnd.DegreeProgram) int { return len(v.Degree) })
 
 	// Print the header.
 	// This has to be so cumbersome because specifying a width for ANSI colored strings somehow has no effect.

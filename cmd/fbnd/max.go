@@ -1,4 +1,4 @@
-package internal
+package main
 
 // Max calls f for each element in slice and returns the max value returned by f.
 // If slice is empty then 0 is returned.

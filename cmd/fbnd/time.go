@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"encoding/json"
@@ -8,28 +8,25 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/n9v9/fbnd"
-	"github.com/n9v9/fbnd/cmd/fbnd/cmd/internal"
 	"github.com/spf13/cobra"
 )
 
-var timeCmd = &cobra.Command{
-	Use:   "time",
-	Short: "Display the timetable for a specific degree program",
-	Long: `Display the timetable for a specific degree program
+func cmdTime() *cobra.Command {
+	return &cobra.Command{
+		Use:   "time",
+		Short: "Display the timetable for a specific degree program",
+		Long: `Display the timetable for a specific degree program
 
 This command expects the ID of the degree program for which to display the timetable.
 If you do not know the ID, you can see all available ones by calling the list command.`,
-	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := runTime(args[0]); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(timeCmd)
+		Args: cobra.ExactArgs(1),
+		Run: func(_ *cobra.Command, args []string) {
+			if err := runTime(args[0]); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+		},
+	}
 }
 
 func runTime(id string) error {
@@ -100,9 +97,9 @@ func runTime(id string) error {
 			printlnWeekday(day.Weekday)
 		}
 
-		maxNameShort := internal.Max(day.Courses, func(v *fbnd.Course) int { return len(v.NameShort) })
-		maxLesson := internal.Max(day.Courses, func(v *fbnd.Course) int { return len(v.Lesson.String()) })
-		maxProfessorShort := internal.Max(day.Courses, func(v *fbnd.Course) int { return len(v.ProfessorShort) })
+		maxNameShort := Max(day.Courses, func(v *fbnd.Course) int { return len(v.NameShort) })
+		maxLesson := Max(day.Courses, func(v *fbnd.Course) int { return len(v.Lesson.String()) })
+		maxProfessorShort := Max(day.Courses, func(v *fbnd.Course) int { return len(v.ProfessorShort) })
 
 		for i, v := range day.Courses {
 			line := fmt.Sprintf("%02d - %02d | %-*s | %-*s | %0-*s | %s",
