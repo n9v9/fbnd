@@ -18,22 +18,18 @@ to the page and choosing the correct timetable; and faster as well.
 
 ## Features
 
-- List all available degree courses for which timetables are available.
-
-- List timetables for specific degree courses.
-
-- Colored output that highlights important parts.
-
-- Flag to disable colored output to use it in scripts.
-
-- Flag to print all data as JSON.
+-   List all available degree courses for which timetables are available.
+-   List timetables for specific degree courses.
+-   Colored output that highlights important parts.
+-   Flag to disable colored output to use it in scripts.
+-   Flag to print all data as JSON.
 
 ## Build from source
 
-With Go 1.15 or above, run the following command:
+With Go 1.18 or above, run the following command:
 
 ```
-go get github.com/n9v9/fbnd/cmd/fbnd
+go install github.com/n9v9/fbnd/cmd/fbnd
 ```
 
 ## Note
