@@ -13,9 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	summer, winter bool
-)
+var summer, winter bool
 
 var listCmd = &cobra.Command{
 	Use:   "list",
@@ -104,10 +102,10 @@ func printTable(programs []fbnd.DegreeProgram) error {
 	formatSemester := func(s fbnd.Semester) string { return fmt.Sprintf("Semester %d", s.Term) }
 	formatHeader := func(cell string) string { return color.New(color.FgWhite, color.Bold).Sprint(cell) }
 
-	maxID := internal.Max(programs, func(i int) int { return len(programs[i].ID) })
-	maxCycle := internal.Max(programs, func(i int) int { return len(formatCycle(programs[i].Semester)) })
-	maxSemester := internal.Max(programs, func(i int) int { return len(formatSemester(programs[i].Semester)) })
-	maxDegree := internal.Max(programs, func(i int) int { return len(programs[i].Degree) })
+	maxID := internal.Max(programs, func(v *fbnd.DegreeProgram) int { return len(v.ID) })
+	maxCycle := internal.Max(programs, func(v *fbnd.DegreeProgram) int { return len(formatCycle(v.Semester)) })
+	maxSemester := internal.Max(programs, func(v *fbnd.DegreeProgram) int { return len(formatSemester(v.Semester)) })
+	maxDegree := internal.Max(programs, func(v *fbnd.DegreeProgram) int { return len(v.Degree) })
 
 	// Print the header.
 	// This has to be so cumbersome because specifying a width for ANSI colored strings somehow has no effect.

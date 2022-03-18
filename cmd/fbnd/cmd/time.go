@@ -100,9 +100,9 @@ func runTime(id string) error {
 			printlnWeekday(day.Weekday)
 		}
 
-		maxNameShort := internal.Max(day.Courses, func(i int) int { return len(day.Courses[i].NameShort) })
-		maxLesson := internal.Max(day.Courses, func(i int) int { return len(day.Courses[i].Lesson.String()) })
-		maxProfessorShort := internal.Max(day.Courses, func(i int) int { return len(day.Courses[i].ProfessorShort) })
+		maxNameShort := internal.Max(day.Courses, func(v *fbnd.Course) int { return len(v.NameShort) })
+		maxLesson := internal.Max(day.Courses, func(v *fbnd.Course) int { return len(v.Lesson.String()) })
+		maxProfessorShort := internal.Max(day.Courses, func(v *fbnd.Course) int { return len(v.ProfessorShort) })
 
 		for i, v := range day.Courses {
 			line := fmt.Sprintf("%02d - %02d | %-*s | %-*s | %0-*s | %s",
