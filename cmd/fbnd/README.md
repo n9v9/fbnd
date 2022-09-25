@@ -24,12 +24,12 @@ to the page and choosing the correct timetable; and faster as well.
 -   Flag to disable colored output to use it in scripts.
 -   Flag to print all data as JSON.
 
-## Build from source
+## Installation
 
 With Go 1.18 or above, run the following command:
 
 ```
-go install github.com/n9v9/fbnd/cmd/fbnd
+go install github.com/n9v9/fbnd/cmd/fbnd@latest
 ```
 
 ## Note
