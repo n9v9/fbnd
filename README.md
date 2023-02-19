@@ -1,5 +1,13 @@
 # fbnd
 
+## 🚧 Broken
+
+The website's structure has changed, resulting in breaking this tool. The website now uses a JSON API, so web scraping is no longer necessary, or even easily possible, since it now loads the data dynamically after page load.
+
+Maybe when I have the time, I create a new version of this tool, but for now, it is archived.
+
+---
+
 A small library to parse the publicly available website of timetables for degree
 programs of the Faculty of Electrical Engineering and Computer Science,
 abbreviated FB03, at the Hochschule Niederrhein.
